@@ -1,103 +1,134 @@
 #include "shell.h"
-/**
- * c_extra - checks if there are exta commands
- * @space: space
- * @rt: Return
- * Return: 1 if we have more commands to execute, 0 if we don't
- */
-int c_extra(buff_t *space, int rt)
-{
-	if (space->bl_s == 0)
-		return (0);
 
-	while (space->b_s[space->bl_s] != '\0')
+void sig_handler(int sig);
+int execute(char **args, char **front);
+
+/**
+ * sig_handler - Prints a new prompt upon a signal.
+ * @sig: The signal.
+ */
+void sig_handler(int sig)
+{
+	char *new_prompt = "\n$ ";
+
+	(void)sig;
+	signal(SIGINT, sig_handler);
+	write(STDIN_FILENO, new_prompt, 3);
+}
+
+/**
+ * execute - Executes a command in a child process.
+ * @args: An array of arguments.
+ * @front: A double pointer to the beginning of args.
+ *
+ * Return: If an error occurs - a corresponding error code.
+ *         O/w - The exit value of the last executed command.
+ */
+int execute(char **args, char **front)
+{
+	pid_t child_pid;
+	int status, flag = 0, ret = 0;
+	char *command = args[0];
+
+	if (command[0] != '/' && command[0] != '.')
 	{
-		if (space->b_s[space->bl_s] == ';')
-		{
-			c_short(space);
-			return (1);
-		}
-		if (space->b_s[space->bl_s] == '&' && rt == 0)
-		{
-			c_short(space);
-			return (1);
-		}
-		if (space->b_s[space->bl_s] == '|' && rt != 0)
-		{
-			c_short(space);
-			return (1);
-		}
-		space->bl_s++;
+		flag = 1;
+		command = get_location(command);
 	}
-	space->bl_s = 0;
-	return (0);
+
+	if (!command || (access(command, F_OK) == -1))
+	{
+		if (errno == EACCES)
+			ret = (create_error(args, 126));
+		else
+			ret = (create_error(args, 127));
+	}
+	else
+	{
+		child_pid = fork();
+		if (child_pid == -1)
+		{
+			if (flag)
+				free(command);
+			perror("Error child:");
+			return (1);
+		}
+		if (child_pid == 0)
+		{
+			execve(command, args, environ);
+			if (errno == EACCES)
+				ret = (create_error(args, 126));
+			free_env();
+			free_args(args, front);
+			free_alias_list(aliases);
+			_exit(ret);
+		}
+		else
+		{
+			wait(&status);
+			ret = WEXITSTATUS(status);
+		}
+	}
+	if (flag)
+		free(command);
+	return (ret);
 }
+
 /**
- * c_short - short
- * @space: space
+ * main - Runs a simple UNIX command interpreter.
+ * @argc: The number of arguments supplied to the program.
+ * @argv: An array of pointers to the arguments.
+ *
+ * Return: The return value of the last executed command.
  */
-void c_short(buff_t *space)
+int main(int argc, char *argv[])
 {
-	int chk;
+	int ret = 0, retn;
+	int *exe_ret = &retn;
+	char *prompt = "$ ", *new_line = "\n";
 
-	chk = 0;
-	while (space->b_s[space->bl_s] == ';')
-		space->bl_s++, chk = 1;
-	if (chk)
-		return;
+	name = argv[0];
+	hist = 1;
+	aliases = NULL;
+	signal(SIGINT, sig_handler);
 
-	while (space->b_s[space->bl_s] == '|')
-		space->bl_s++, chk = 1;
-	if (chk)
-		return;
+	*exe_ret = 0;
+	environ = _copyenv();
+	if (!environ)
+		exit(-100);
 
-	while (space->b_s[space->bl_s] == '&')
-		space->bl_s++;
-}
-/**
- * main - hsh
- * @ac: argument count
- * @av: a list of all arguments
- * @environ: environmental variable list from the parent
- * Return: 0 on success.
- */
-int main(int ac, char **av, char **environ)
-{
-	char **array;
-	list_e *ev_n;
-	int rt;
-	buff_t b = {NULL, BUFSIZE, 0};
-	(void)ac, (void)av, (void)environ;
+	if (argc != 1)
+	{
+		ret = proc_file_commands(argv[1], exe_ret);
+		free_env();
+		free_alias_list(aliases);
+		return (*exe_ret);
+	}
 
-	b.b_s = _malloc(sizeof(char) * b.sz);
-	array = NULL;
-	rt = 0;
+	if (!isatty(STDIN_FILENO))
+	{
+		while (ret != END_OF_FILE && ret != EXIT)
+			ret = handle_args(exe_ret);
+		free_env();
+		free_alias_list(aliases);
+		return (*exe_ret);
+	}
 
-	ev_n = mk_env();
-	_checker("", ev_n, 'c');
-	signal(SIGINT, SIG_IGN);
-	signal(SIGINT, _sig);
 	while (1)
 	{
-		if (!c_extra(&b, rt))
+		write(STDOUT_FILENO, prompt, 2);
+		ret = handle_args(exe_ret);
+		if (ret == END_OF_FILE || ret == EXIT)
 		{
-			_puts("$ ");
-			get_line(&b, STDIN_FILENO, ev_n);
-			_checker(b.b_s, ev_n, 'a');
+			if (ret == END_OF_FILE)
+				write(STDOUT_FILENO, new_line, 1);
+			free_env();
+			free_alias_list(aliases);
+			exit(*exe_ret);
 		}
-		while (aliase(&b, ev_n))
-			;
-		_to_buff(&b, ev_n, rt);
-		read_file(&b, ev_n);
-		break_buffer(&b, &array);
-		if (array[0] == NULL)
-			continue;
-		rt = execute2(array, ev_n, b.sz);
-		if (rt != 0 && rt != 2)
-		{
-			rt = exec_part(array, ev_n, b.sz);
-		}
-			
 	}
-	return (EXIT_SUCCESS);
+
+	free_env();
+	free_alias_list(aliases);
+	return (*exe_ret);
 }
