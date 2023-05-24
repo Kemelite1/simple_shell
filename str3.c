@@ -16,7 +16,7 @@ int strictStringMatch(const char *string1, const char *string2)
     while (string1[idx] == string2[idx])
     {
         if (string1[idx] == '\0' || string2[idx] == '\0')
-            return 1;
+            return (1);
         idx++;
     }
     
@@ -89,26 +89,4 @@ int _strcmp(char *s1, char *s2)
 			return (s1[a] - s2[a]);
 	}
 	return (0);
-}
-/**
- * char *_strcpy - a function that copies the string pointed to by src
- * @dest: copy to
- * @src: copy from
- * Return: string
- */
-char *_strcpy(char *dest, char *src)
-{
-	int l = 0;
-	int x = 0;
-
-	while (*(src + l) != '\0')
-	{
-		l++;
-	}
-	for ( ; x < l ; x++)
-	{
-		dest[x] = src[x];
-	}
-	dest[l] = '\0';
-	return (dest);
 }

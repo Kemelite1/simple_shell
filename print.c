@@ -10,15 +10,13 @@ void _puts(char *str)
 	{
 		_putchar(*str++);
 	}
-	// _putchar('\n');
-
 }
 
 
 void print_int(int num)
 {
     char str[10];
-    int index = 0;
+    int index = 0, i, j;
     char temp;
 
     if (num < 0) {
@@ -32,13 +30,13 @@ void print_int(int num)
     } while (num > 0);
     str[index] = '\0';
     
-    for (int i = 0, j = index - 1; i < j; i++, j--) {
+    for ( i = 0, j = index - 1; i < j; i++, j--) {
         temp = str[i];
         str[i] = str[j];
         str[j] = temp;
     }
     
-    for (int i = 0; str[i] != '\0'; i++) {
+    for ( i = 0; str[i] != '\0'; i++) {
         _putchar(str[i]);
     }
 }

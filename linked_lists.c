@@ -4,36 +4,34 @@
  * @list: list
  * @newnode: new node
  */
-void add_node(addr_list *list, void *newnode)
+void add_node(list_a *list, void *newnode)
 {
-	addr_list *new = malloc(sizeof(addr_list));
+	list_a *new = malloc(sizeof(list_a));
 
-	// if (new == NULL)
-	if (!new)
+	if (new == NULL)
 	{
 		_puts("Out of Memory, Exiting (._.)\n");
 		_setfree(FREE_ADDRESSES);
 		_exit(4);
 	}
-	new->address = newnode;
-	new->next = list->next;
-	list->next = new;
+	new->loc = newnode;
+	new->nxt = list->nxt;
+	list->nxt = new;
 }
 /**
  * free_list - free list
  * @list: list
  */
-void free_list(addr_list *list)
+void free_list(list_a *list)
 {
-	addr_list *new;
+	list_a *new;
 
-	// while (list != NULL)
-	while (list)
+	while (list != NULL)
 	{
 		new = list;
-		list = list->next;
-		if (new->address != NULL)
-			free(new->address);
+		list = list->nxt;
+		if (new->loc != NULL)
+			free(new->loc);
 		free(new);
 	}
 }
@@ -42,19 +40,18 @@ void free_list(addr_list *list)
  * @list: list
  * @addr: data it searches for
  *
- * Return: 0 if address is found and cleared, 1 if no match is found
+ * Return: 0 if loc is found and cleared, 1 if no match is found
  */
-int rem_node(addr_list *list, void *addr)
+int rem_node(list_a *list, void *addr)
 {
-	// while (list != NULL)
-	while (list)
+	while (list != NULL)
 	{
-		if (list->address == addr)
+		if (list->loc == addr)
 		{
-			list->address = NULL;
+			list->loc = NULL;
 			return (0);
 		}
-		list = list->next;
+		list = list->nxt;
 	}
 	return (1);
 }

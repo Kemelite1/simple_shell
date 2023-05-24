@@ -6,17 +6,17 @@
  * Return: 0 if successly found PATH variable and 1 if PATH
  * not found
  */
-int _pth(char *locate, env_t *environ)
+int _pth(char *locate, list_e *environ)
 {
-	env_t *new;
+	list_e *new;
 
 	new = environ;
-	// for (; new->next != NULL; new = new->next)
+
         while (new->next != NULL)
 	{
-		if (matchStrings(new->value, "PATH=") != 0)
+		if (matchStrings(new->hold, "PATH=") != 0)
 		{
-			_strcpy(locate, new->value);
+			_strcpy(locate, new->hold);
 			return (EXIT_SUCCESS);
 		}
                 new = new->next;
@@ -35,7 +35,6 @@ int mk_pth(char *input, char **find)
 
         i = 0;
 
-	// for (i = 0; find[i] != NULL; i++)
         while (find[i] != NULL)
 	{
 		_strncat(find[i], input, _strlen(input));
@@ -44,7 +43,7 @@ int mk_pth(char *input, char **find)
 		{
 			close(file);
 			_strcpy(input, find[i]);
-			return (EXIT_SUCCESS);
+			return (0);
 		}
                 i++;
 	}

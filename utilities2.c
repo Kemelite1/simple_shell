@@ -1,14 +1,13 @@
 #include "shell.h"
 /**
  * size_x - resize
- * @cont: the buffer
+ * @cont: the buff_t
  * @arr: array
  */
 void size_x(char *cont, char ***arr)
 {
 	int j, i, ident, w_s;
 
-	// for (j = 0, ident = 1; !input_finish(*cont); cont++)
         j = 0;
         ident = 1;
         while (!input_finish(*cont))
@@ -23,7 +22,6 @@ void size_x(char *cont, char ***arr)
 
 	if (*arr != NULL)
 	{
-		// for (i = 0; (*arr)[i] != NULL; i++);
                 i = 0;
                 while ((*arr)[i] != NULL)
                         i++;
@@ -54,7 +52,6 @@ char *find_elem(char *array, int index)
 	ct = 0;
 	i = 0;
 	j = 0;
-	// for (i = 0, j = 0; array[i] != '\0' || ct <= index; i++)
 	while (array[i] != '\0' || ct <= index)
 	{
 		if (array[i] == ' ' && ct == index - 1)
@@ -107,42 +104,59 @@ char *cur_pid(void)
 	return (ppid);
 }
 /**
- * _to_buff - to buffer
+ * _to_buff - to buff_t
  * @base: buff
  * @environ: Environment
  * @rt: return value of previous command
  */
-void _to_buff(buffer *base, env_t *environ, int rt)
+void _to_buff(buff_t *base, list_e *environ, int rt)
 {	
 	char *pause;
 	int i, j;
 
 
 	j = i = 0;
-	while ((i = findSubstringIndex(base->buf + base->bp + j, "$")) >= 0 &&
-		i < findFirstCharacterIndex(base->buf + base->bp + j, "\n;&|"))
+	while ((i = findSubstringIndex(base->b_s + base->bl_s + j, "$")) >= 0 &&
+		i < findFirstCharacterIndex(base->b_s + base->bl_s + j, "\n;&|"))
 	{
 		i += j;
 		j = i + 1;
-		if (base->buf[base->bp + i + 1] == '?')
+		if (base->b_s[base->bl_s + i + 1] == '?')
 		{
 			pause = _itoa(rt, 1);
-			rem_str(base, base->bp + i);
-			add_str(base, pause, base->bp + i);
+			rem_str(base, base->bl_s + i);
+			add_str(base, pause, base->bl_s + i);
 			_free(pause);
 		}
-		else if (base->buf[base->bp + i + 1] == '$')
+		else if (base->b_s[base->bl_s + i + 1] == '$')
 		{
-			rem_str(base, base->bp + i);
+			rem_str(base, base->bl_s + i);
 			pause =  cur_pid();
-			add_str(base, pause, base->bp + i);
+			add_str(base, pause, base->bl_s + i);
 		}
-		else if (!is_w(base->buf[base->bp + i + 1]))
+		else if (!is_w(base->b_s[base->bl_s + i + 1]))
 		{
-			pause = _del_nm(environ, base->buf + base->bp + i + 1, base->size);
-			rem_str(base, base->bp + i);
+			pause = _del_nm(environ, base->b_s + base->bl_s + i + 1, base->sz);
+			rem_str(base, base->bl_s + i);
 			if (pause != NULL)
-				add_str(base, pause, base->bp + i);
+				add_str(base, pause, base->bl_s + i);
 		}
 	}
+}/**
+ * _strcat - concatenate two strings
+ * @dest : pointer
+ * @src : pointer 2
+ * Return: Always 0.
+ */
+char *_strcat(char *dest, char *src)
+{
+	int a, b;
+
+	for (a = 0; dest[a] != '\0'; a++)
+		;
+	for (b = 0; src[b] != '\0'; b++)
+	{
+		dest[a + b] = src[b];
+	}
+	return (dest);
 }

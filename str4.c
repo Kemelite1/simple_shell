@@ -91,12 +91,12 @@ int matchStringsAndDelim(char *string1, char *string2, char *delimiter)
 
     while (string1[index] == string2[index])
     {
-        if (isDelimiter(string1[index], delimiter))
+        if (characterMatch(string1[index], delimiter))
             return (1);
         index++;
     }
 
-    if (isDelimiter(string1[index], delimiter) || isDelimiter(string2[index], delimiter))
+    if (characterMatch(string1[index], delimiter) || characterMatch(string2[index], delimiter))
         return (1);
 
     return (0);
